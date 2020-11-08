@@ -13,95 +13,104 @@
  * @author PEMapModder
  */
 
-class Flow{
-	private static $childId;
+class Flow
+{
 
-	/** @var Packet */
-	private $packet;
-	private $nextSize;
-	private $current = 0;
+    private static $childId;
 
-	private $fields = [];
-	private $history = [];
+    /** @var Packet */
+    private $packet;
+    private $nextSize;
+    private $current = 0;
 
-	public function __construct(Packet $packet){
-		$this->packet = $packet;
-		self::$childId = 0;
-		$this->id = 0;
-	}
+    private $fields = [];
+    private $history = [];
 
-	public function flow(){
-//		echo json_encode($this->packet->instr,JSON_PRETTY_PRINT);
-//		exit;
-		while($this->current < count($this->packet->instr)){
-			$this->flowUnit();
-			$this->current++;
-		}
-	}
+    public function __construct(Packet $packet)
+    {
+        $this->packet = $packet;
+        self::$childId = 0;
+        $this->id = 0;
+    }
 
-	public function flowUnit(){
-		$instr = $this->packet->instr[$this->current];
-		if(!($instr instanceof Instruction)){
-			var_dump($instr);
-			exit("Not an Instruction");
-		}
-		if($instr->instr === "movs"){
-			list($name, $value) = explode(", ", $instr->args);
-			if($name === "r2"){
-				if($value{0} === "#"){
-					if(substr($value, 1, 2) === "0x"){
-						$this->nextSize = hexdec(substr($value, 3));
-					}else{
-						$this->nextSize = (int) substr($value, 1);
-					}
-				}
-			}
-		}elseif($instr->instr === "bne"){
-			$offset = strstr($instr->args, " ", true);
-			$this->branchIf($offset);
-		}elseif($instr->instr === "cbnz"){
-			$offset = strstr(explode(", ", $instr->args)[1], " ", true);
-			$this->branchIf($offset);
-		}elseif($instr->instr === "b"){
-			$offset = strstr($instr->args, " ", true);
-			$this->branch($offset);
-		}elseif($instr->instr === "pop"){
-			$this->current = PHP_INT_MAX;
-		}elseif($instr->instr === "bl"){
-			if(strstr($instr->args, " ") === " <RakNet::BitStream::ReadBits(unsigned char*, unsigned int, bool)>"){
-				$field = new PacketField("scalar", $this->nextSize);
-				$this->fields[] = $field;
-			}elseif(strpos($instr->args, " <PacketUtil::readString(") !== false){
-				$this->fields[] = new PacketField("string", -2);
-			}elseif(strpos($instr->args, " <PacketUtil::readUUID(") !== false){
-				$this->fields[] = new PacketField("uuid", 16);
-			}elseif(strpos($instr->args, " <PacketUtil::readItemInstance(") !== false){
-				$this->fields[] = new PacketField("item", -2);
-			}
-		}
-	}
+    public function flow()
+    {
+        /*echo json_encode($this->packet->instr, JSON_PRETTY_PRINT);
+        exit;*/
+        while ($this->current < count($this->packet->instr)) {
+            $this->flowUnit();
+            $this->current++;
+        }
+    }
 
-	public function branchIf($next){
-		return;
-		$flow = clone $this;
-		if(!$flow->branch($next)){
-			return;
-		}
-		$flow->id = ++self::$childId;
-		$this->packet->flows[] = $flow;
-		$flow->flow();
-	}
+    public function flowUnit()
+    {
+        $instr = $this->packet->instr[$this->current];
+        if (!($instr instanceof Instruction)) {
+            var_dump($instr);
+            exit("Not an Instruction");
+        }
+        if ($instr->instr === "movs") {
+            list($name, $value) = explode(", ", $instr->args);
+            if ($name === "r2") {
+                if ($value{0} === "#") {
+                    if (substr($value, 1, 2) === "0x") {
+                        $this->nextSize = hexdec(substr($value, 3));
+                    } else {
+                        $this->nextSize = (int) substr($value, 1);
+                    }
+                }
+            }
+        } elseif ($instr->instr === "bne") {
+            $offset = strstr($instr->args, " ", true);
+            $this->branchIf($offset);
+        } elseif ($instr->instr === "cbnz") {
+            $offset = strstr(explode(", ", $instr->args)[1], " ", true);
+            $this->branchIf($offset);
+        } elseif ($instr->instr === "b") {
+            $offset = strstr($instr->args, " ", true);
+            $this->branch($offset);
+        } elseif ($instr->instr === "pop") {
+            $this->current = PHP_INT_MAX;
+        } elseif ($instr->instr === "bl") {
+            if (strstr($instr->args, " ") === " <RakNet::BitStream::ReadBits(unsigned char*, unsigned int, bool)>") {
+                $field = new PacketField("scalar", $this->nextSize);
+                $this->fields[] = $field;
+            } elseif (strpos($instr->args, " <PacketUtil::readString(") !== false) {
+                $this->fields[] = new PacketField("string", -2);
+            } elseif (strpos($instr->args, " <PacketUtil::readUUID(") !== false) {
+                $this->fields[] = new PacketField("uuid", 16);
+            } elseif (strpos($instr->args, " <PacketUtil::readItemInstance(") !== false) {
+                $this->fields[] = new PacketField("item", -2);
+            }
+        }
+    }
 
-	public function branch($offset){
-		if(isset($this->packet->instrOffsetIndex[$offset]) and !isset($this->history[$offset])){
-			$this->history[$offset] = true;
-			$this->current = $this->packet->instrOffsetIndex[$offset];
-			return true;
-		}
-		return false;
-	}
+    public function branchIf($next)
+    {
+        return;
+        $flow = clone $this;
+        if (!$flow->branch($next)) {
+            return;
+        }
+        $flow->id = ++self::$childId;
+        $this->packet->flows[] = $flow;
+        $flow->flow();
+    }
 
-	public function getFields(){
-		return $this->fields;
-	}
+    public function branch($offset)
+    {
+        if (isset($this->packet->instrOffsetIndex[$offset]) && !isset($this->history[$offset])) {
+            $this->history[$offset] = true;
+            $this->current = $this->packet->instrOffsetIndex[$offset];
+            return true;
+        }
+        return false;
+    }
+
+    public function getFields()
+    {
+        return $this->fields;
+    }
+
 }
