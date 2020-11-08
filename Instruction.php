@@ -13,54 +13,52 @@
  * @author PEMapModder
  */
 
-class Instruction{
-	/** @var string */
-	public $offsetHex;
-	/** @var int */
-	public $offset;
-	/** @var string */
-	public $byteCode;
-	/** @var string */
-	public $instr;
-	/** @var string */
-	public $cond;
-	/** @var string */
-	public $args;
+class Instruction
+{
 
-	public function __construct($line){
-		if(preg_match(/** @lang RegExp */
-			'%([a-f0-9]+):[\t ]+([0-9a-f]{4}( [0-9a-f]{4})?)[\t ]+([a-z]+).*<illegal .*$%', $line, $match)
-		){
-			$this->offsetHex = $match[1];
-			$this->offset = hexdec($this->offsetHex);
-			$this->byteCode = $match[2];
-			$this->instr = $match[4];
-			$this->cond = "";
-			$this->args = "";
-			return;
-		}
-		if(preg_match(/** @lang RegExp */
-			'%([a-f0-9]+):[\t ]+([0-9a-f]{4}( [0-9a-f]{4})?).*; <UNDEFINED>.*$%', $line, $match)
-		){
-			$this->offsetHex = $match[1];
-			$this->offset = hexdec($this->offsetHex);
-			$this->byteCode = $match[2];
-			$this->instr = "undefined";
-			$this->cond = "";
-			$this->args = "";
-			return;
-		}
-		if(!preg_match(/** @lang RegExp */
-			'%([a-f0-9]+):[\t ]+([0-9a-f]{4}( [0-9a-f]{4})?)[\t ]+([a-z]+)(\.([a-z0-9]))?([\t ]+([^;]+)(;.*)?)?$%', $line, $match)
-		){
-			echo $line, PHP_EOL;
-			throw new InvalidArgumentException("Not an instruction");
-		}
-		$this->offsetHex = $match[1];
-		$this->offset = hexdec($this->offsetHex);
-		$this->byteCode = $match[2];
-		$this->instr = strtolower($match[4]);
-		$this->cond = $match[6] ?? "";
-		$this->args = $match[8] ?? "";
-	}
+    /** @var string */
+    public $offsetHex;
+    /** @var int */
+    public $offset;
+    /** @var string */
+    public $byteCode;
+    /** @var string */
+    public $instr;
+    /** @var string */
+    public $cond;
+    /** @var string */
+    public $args;
+
+    public function __construct($line)
+    {
+        if (preg_match('%([a-f0-9]+):[\t ]+([0-9a-f]{4}( [0-9a-f]{4})?)[\t ]+([a-z]+).*<illegal .*$%', $line, $match)) {
+            $this->offsetHex = $match[1];
+            $this->offset = hexdec($this->offsetHex);
+            $this->byteCode = $match[2];
+            $this->instr = $match[4];
+            $this->cond = "";
+            $this->args = "";
+            return;
+        }
+        if (preg_match('%([a-f0-9]+):[\t ]+([0-9a-f]{4}( [0-9a-f]{4})?).*; <UNDEFINED>.*$%', $line, $match)) {
+            $this->offsetHex = $match[1];
+            $this->offset = hexdec($this->offsetHex);
+            $this->byteCode = $match[2];
+            $this->instr = "undefined";
+            $this->cond = "";
+            $this->args = "";
+            return;
+        }
+        if (!preg_match('%([a-f0-9]+):[\t ]+([0-9a-f]{4}( [0-9a-f]{4})?)[\t ]+([a-z]+)(\.([a-z0-9]))?([\t ]+([^;]+)(;.*)?)?$%', $line, $match)) {
+            echo $line, PHP_EOL;
+            throw new InvalidArgumentException("Not an instruction");
+        }
+        $this->offsetHex = $match[1];
+        $this->offset = hexdec($this->offsetHex);
+        $this->byteCode = $match[2];
+        $this->instr = strtolower($match[4]);
+        $this->cond = $match[6] ?? "";
+        $this->args = $match[8] ?? "";
+    }
+
 }
