@@ -13,72 +13,81 @@
  * @author PEMapModder
  */
 
-class Packet{
-	/** @type string */
-	public $name;
-	/** @type int */
-	public $id;
-	/** @type string */
-	public $idHex;
-	/** @var Instruction[] */
-	public $instr;
-	public $instrOffsetIndex;
-	/** @type PacketField[][] */
-	public $fields;
-	/** @var Flow[] */
-	public $flows = [];
+class Packet
+{
 
-	public function __construct($name){
-		$this->name = $name;
-	}
+    /** @type string */
+    public $name;
+    /** @type int */
+    public $id;
+    /** @type string */
+    public $idHex;
+    /** @var Instruction[] */
+    public $instr;
+    public $instrOffsetIndex;
+    /** @type PacketField[][] */
+    public $fields;
+    /** @var Flow[] */
+    public $flows = [];
 
-	public function dumpInfo(){
-		return [
-			"id" => $this->idHex,
-			"fields" => array_map(function ($fieldSet){
-				return array_map(function (PacketField $field){
-					return $field->dumpInfo();
-				}, $fieldSet);
-			}, $this->fields),
-		];
-	}
+    public function __construct($name)
+    {
+        $this->name = $name;
+    }
 
-	public function startAnalyze(){
-		$this->fields = [];
-		$this->instr = [];
-		$this->instrOffsetIndex = [];
-	}
+    public function dumpInfo()
+    {
+        return [
+            "id" => $this->idHex,
+            "fields" => array_map(function ($fieldSet) {
+                return array_map(function (PacketField $field) {
+                    return $field->dumpInfo();
+                }, $fieldSet);
+            }, $this->fields),
+        ];
+    }
 
-	public function analyze($line){
-		$instr = new Instruction($line);
-		$this->instrOffsetIndex[$instr->offsetHex] = $i = count($this->instr);
-		$this->instr[$i] = $instr;
-	}
+    public function startAnalyze()
+    {
+        $this->fields = [];
+        $this->instr = [];
+        $this->instrOffsetIndex = [];
+    }
 
-	public function stopAnalyze(){
-		$flow = new Flow($this);
-		$this->flows[] = $flow;
-		$flow->flow();
+    public function analyze($line)
+    {
+        $instr = new Instruction($line);
+        $this->instrOffsetIndex[$instr->offsetHex] = $i = count($this->instr);
+        $this->instr[$i] = $instr;
+    }
 
-		$fieldSets = [];
-		foreach($this->flows as $flow){
-			$fields = $flow->getFields();
-			foreach($fieldSets as $fieldSet){
-				if($fieldSet == $fields){
-					continue 2;
-				}
-			}
-			$fieldSets[] = $fields;
-		}
+    public function stopAnalyze()
+    {
+        $flow = new Flow($this);
+        $this->flows[] = $flow;
+        $flow->flow();
 
-		$this->fields = $fieldSets;
-		echo "\rFinished analyzing $this->name (memory: " . round(memory_get_usage() / 1024, 2) . " KB)\n";
-		unset($this->instr);
-		gc_collect_cycles();
-		echo "Freed resources (memory: " . round(memory_get_usage() / 1024, 2) . " KB)\n";
-	}
+        $fieldSets = [];
+        foreach ($this->flows as $flow) {
+            $fields = $flow->getFields();
+            foreach ($fieldSets as $fieldSet) {
+                if ($fieldSet == $fields) {
+                    continue 2;
+                }
+            }
+            $fieldSets[] = $fields;
+        }
 
-	public function isReady(){
-		return isset($this->id) and isset($this->fields);
-	}
+        $this->fields = $fieldSets;
+        echo "\rFinished analyzing $this->name (memory: " . round(memory_get_usage() / 1024, 2) . " KB)\n";
+        unset($this->instr);
+        gc_collect_cycles();
+        echo "Freed resources (memory: " . round(memory_get_usage() / 1024, 2) . " KB)\n";
+    }
+
+    public function isReady()
+    {
+        return isset($this->id) && isset($this->fields);
+    }
+
 }
