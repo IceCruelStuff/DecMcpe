@@ -13,18 +13,18 @@
  * @author PEMapModder
  */
 
-($hex = getopt("x::")["x"] ?? false) or die("Missing parameter -x");
+($hex = getopt("x::")["x"] ?? false) || die("Missing parameter -x");
 $opts = getopt("r", ["in:"]);
 $SUBJECT = $opts["in"] ?? "in/libminecraftpe.so";
 $in = file_get_contents($SUBJECT);
-if(isset($opts["r"])){
-	$bin = strrev(hex2bin($hex));
-}else{
-	$bin = hex2bin($hex);
+if (isset($opts["r"])) {
+    $bin = strrev(hex2bin($hex));
+} else {
+    $bin = hex2bin($hex);
 }
 printf("%s\n", bin2hex($bin));
 
 $offset = 0;
-while(($offset = strpos($in, $bin, $offset)) !== false){
-	echo "Found: $offset\n";
+while (($offset = strpos($in, $bin, $offset)) !== false) {
+    echo "Found: $offset\n";
 }
