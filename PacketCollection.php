@@ -13,67 +13,77 @@
  * @author PEMapModder
  */
 
-class PacketCollection{
-	/** @type int */
-	private $protocolVersion;
-	/** @type string */
-	private $protocolVersionHex;
-	/** @type Packet[] */
-	private $packets = [];
+class PacketCollection
+{
 
-	public function getPackets(){
-		return $this->packets;
-	}
+    /** @type int */
+    private $protocolVersion;
+    /** @type string */
+    private $protocolVersionHex;
+    /** @type Packet[] */
+    private $packets = [];
 
-	public function get($name){
-		if(!isset($this->packets[$name])){
-			$this->packets[$name] = new Packet($name);
-		}
-		return $this->packets[$name];
-	}
+    public function getPackets()
+    {
+        return $this->packets;
+    }
 
-	public function write($file){
-		ksort($this->packets, SORT_NATURAL | SORT_FLAG_CASE);
-		$this->free(true);
-		var_dump($this->packets);
-		$data = [
-			"protocolVersion" => $this->protocolVersionHex,
-			"packets" => $this->packets,
-		];
-		file_put_contents($file, json_encode($data, JSON_UNESCAPED_SLASHES | JSON_BIGINT_AS_STRING | JSON_PRETTY_PRINT));
-	}
+    public function get($name)
+    {
+        if (!isset($this->packets[$name])) {
+            $this->packets[$name] = new Packet($name);
+        }
+        return $this->packets[$name];
+    }
 
-	/**
-	 * @return int
-	 */
-	public function getProtocolVersion(){
-		return $this->protocolVersion;
-	}
+    public function write($file)
+    {
+        ksort($this->packets, SORT_NATURAL | SORT_FLAG_CASE);
+        $this->free(true);
+        var_dump($this->packets);
+        $data = [
+            "protocolVersion" => $this->protocolVersionHex,
+            "packets" => $this->packets,
+        ];
+        file_put_contents($file, json_encode($data, JSON_UNESCAPED_SLASHES | JSON_BIGINT_AS_STRING | JSON_PRETTY_PRINT));
+    }
 
-	/**
-	 * @return string
-	 */
-	public function getProtocolVersionHex(){
-		return $this->protocolVersionHex;
-	}
+    /**
+     * @return int
+     */
+    public function getProtocolVersion()
+    {
+        return $this->protocolVersion;
+    }
 
-	/**
-	 * @param int $protocolVersion
-	 */
-	public function setProtocolVersion($protocolVersion){
-		$this->protocolVersion = $protocolVersion;
-		$this->protocolVersionHex = sprintf("0x%x", $protocolVersion);
-	}
+    /**
+     * @return string
+     */
+    public function getProtocolVersionHex()
+    {
+        return $this->protocolVersionHex;
+    }
 
-	public function free(bool $delete = false){
-		foreach($this->packets as $k => &$packet){
-			if($packet instanceof Packet){
-				if($packet->isReady()){
-					$packet = $packet->dumpInfo();
-				}elseif($delete){
-					unset($this->packets[$k]);
-				}
-			}
-		}
-	}
+    /**
+     * @param int $protocolVersion
+     */
+    public function setProtocolVersion($protocolVersion)
+    {
+        $this->protocolVersion = $protocolVersion;
+        $this->protocolVersionHex = sprintf("0x%x", $protocolVersion);
+    }
+
+    public function free(bool $delete = false)
+    {
+        foreach ($this->packets as $k => &$packet) {
+            if ($packet instanceof Packet) {
+                if ($packet->isReady()) {
+                    $packet = $packet->dumpInfo();
+                } elseif ($delete) {
+                    unset($this->packets[$k]);
+                }
+            }
+        }
+    }
+
 }
